@@ -2720,6 +2720,12 @@ pub const App = struct {
             .detach;
 
         try self.state.pending_requests.put(msgid, request_info);
+        errdefer {
+            _ = self.state.pending_requests.remove(msgid);
+            if (request_info == .switch_session) {
+                self.allocator.free(request_info.switch_session);
+            }
+        }
         try self.sendDirect(encoded);
     }
 

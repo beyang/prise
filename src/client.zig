@@ -199,11 +199,16 @@ pub const ClientState = struct {
 
     pub fn deinit(self: *ClientState) void {
         self.pending_requests.deinit();
+        self.clearCwdMap();
+        self.cwd_map.deinit();
+    }
+
+    pub fn clearCwdMap(self: *ClientState) void {
         var it = self.cwd_map.valueIterator();
         while (it.next()) |val| {
             self.allocator.free(val.*);
         }
-        self.cwd_map.deinit();
+        self.cwd_map.clearRetainingCapacity();
     }
 };
 
@@ -2460,6 +2465,7 @@ pub const App = struct {
                             .switch_session => |session_name| {
                                 log.info("Switching to session: {s}", .{session_name});
                                 app.clearSurfaces();
+                                app.state.clearCwdMap();
 
                                 // Update current session name (transfer ownership)
                                 if (app.current_session_name) |old_name| {

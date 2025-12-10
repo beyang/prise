@@ -1956,6 +1956,12 @@ pub const App = struct {
         }
 
         // Extract PTY ID + cwd pairs for fallback spawning if attach fails
+        // Clean up previous pending_attach_cwd if switching sessions
+        var old_cwd_it = self.pending_attach_cwd.valueIterator();
+        while (old_cwd_it.next()) |cwd| {
+            self.allocator.free(cwd.*);
+        }
+        self.pending_attach_cwd.deinit();
         self.pending_attach_cwd = try extractPtyIdCwdPairs(self.allocator, json);
 
         log.info("Attaching to {} PTYs from session {s}", .{ pty_ids.len, session_name });

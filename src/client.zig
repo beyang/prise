@@ -2705,14 +2705,10 @@ pub const App = struct {
         arr[2] = .{ .string = "detach_ptys" };
         arr[3] = .{ .array = params };
 
-        const encoded = msgpack.encodeFromValue(self.allocator, msgpack.Value{ .array = arr }) catch {
-            self.allocator.free(arr);
-            self.allocator.free(params);
-            return;
-        };
+        defer self.allocator.free(arr);
+        defer self.allocator.free(params);
+        const encoded = try msgpack.encodeFromValue(self.allocator, msgpack.Value{ .array = arr });
         defer self.allocator.free(encoded);
-        self.allocator.free(arr);
-        self.allocator.free(params);
 
         const request_info: ClientState.RequestInfo = if (switch_session_name) |name|
             .{ .switch_session = try self.allocator.dupe(u8, name) }
